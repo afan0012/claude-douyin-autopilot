@@ -1,11 +1,16 @@
-// 执行队列（不经过 Claude，限速在 comments.js / publish.js 里）
+// 执行队列（不经过 Claude，限速在 comments.js 和这里）
 //   node runner.js replies   发送 queue/replies/*.json（{aweme, cid, text}），每次最多 3 条，条间隔随机 2～5 分钟
-//   node runner.js publish   发布 queue/publish/*.json 里 status=="ready" 的第一个（定时发布），完成后改成 published
+//   node runner.js publish   发布 queue/publish/*.json 里 status=="ready" 的第一个，完成后改成 published；每天最多 MAX_PUBLISH_PER_DAY 条
+// 真正会发东西的命令（publish.js --go、sau_publish.py --go、publish_own.js --go、comments.js reply/post、takeover.py）
+// 只有带环境变量 DY_ALLOW_SEND=1 才执行；这里调用子进程时带上，autopilot 给 Claude 的环境里没有
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const Q = path.join(__dirname, 'queue');
-const node = (args) => JSON.parse(execFileSync(process.execPath, args, { cwd: __dirname, encoding: 'utf8', timeout: 40 * 60e3 }).replace(/^[^{]*/s, ''));
+const MAX_PUBLISH_PER_DAY = 2;
+const ENV = { ...process.env, DY_ALLOW_SEND: '1' };
+const node = (args) => JSON.parse(execFileSync(process.execPath, args, { cwd: __dirname, encoding: 'utf8', timeout: 40 * 60e3, env: ENV }).replace(/^[^{]*/s, ''));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const today = () => new Date().toLocaleDateString('sv');   // 本地日期 YYYY-MM-DD
 
 (async () => {
   const mode = process.argv[2];
@@ -27,23 +32,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       if (r.ok || r.skipped === 'already') fs.renameSync(path.join(dir, f), path.join(dir, 'done', f));
       if (r.skipped && r.skipped !== 'already') break;   // 触到限速就停，下一轮再发
     }
-    // 定时发布的作品上线后，发作者评论（发布包里的 pinComment）
-    const pd = path.join(Q, 'publish'); fs.mkdirSync(pd, { recursive: true });
-    const cm = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'comments.json'), 'utf8')); } catch { return { items: [] }; } })();
-    for (const f of fs.readdirSync(pd).filter(f => f.endsWith('.json'))) {
-      const fp = path.join(pd, f), job = JSON.parse(fs.readFileSync(fp, 'utf8'));
-      if (job.status !== 'published' || job.commented || !job.pinComment) continue;
-      const it = cm.items.find(i => i.title === job.title);
-      if (!it) continue;                                  // 还没上线（或 comments.json 还没刷新）
-      let r; try { r = node(['comments.js', 'post', it.id, job.pinComment]); } catch (e) { r = { err: e.message.slice(0, 200) }; }
-      if (r.ok) { job.commented = new Date().toISOString(); job.aweme = it.id; fs.writeFileSync(fp, JSON.stringify(job, null, 1)); }
-      console.log('pinComment', f, JSON.stringify(r));
-    }
   } else if (mode === 'publish') {
     const dir = path.join(Q, 'publish'); fs.mkdirSync(dir, { recursive: true });
-    const f = fs.readdirSync(dir).filter(f => f.endsWith('.json')).find(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).status === 'ready');
-    if (!f) return console.log('nothing ready');
-    const fp = path.join(dir, f), job = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    const jobs = fs.readdirSync(dir).filter(f => f.endsWith('.json')).map(f => [f, JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))]);
+    const done = jobs.filter(([, j]) => j.status === 'published' && j.at && new Date(j.at).toLocaleDateString('sv') === today()).length;
+    if (done >= MAX_PUBLISH_PER_DAY) return console.log(JSON.stringify({ skipped: 'daily_limit', publishedToday: done }));
+    const hit = jobs.find(([, j]) => j.status === 'ready');
+    if (!hit) return console.log('nothing ready');
+    const [f, job] = hit, fp = path.join(dir, f);
     let r; try { r = node(['publish.js', fp, '--go']); } catch (e) { r = { err: e.message.slice(0, 300) }; }
     job.status = r.ok ? 'published' : 'failed'; job.result = r; job.at = new Date().toISOString();
     fs.writeFileSync(fp, JSON.stringify(job, null, 1)); console.log(f, JSON.stringify(r));

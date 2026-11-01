@@ -1,9 +1,11 @@
 #!/bin/bash
-# 抓 #vibe知识大赏 最新发布的视频（sort_type=2），翻 N 页，存到 scan/<时间>/
+# 抓某个话题下最新发布的视频（sort_type=2），翻 N 页，存到 scan/<时间>/
+#   CH_ID=<话题 ch_id> bash scan.sh [页数=12]   （ch_id 在话题页链接或 TikHub 的话题搜索接口里）
 export MSYS_NO_PATHCONV=1
+[ -z "$CH_ID" ] && { echo '先设置 CH_ID=<话题 ch_id>'; exit 1; }
 N=${1:-12}; D=scan/$(date +%m%d_%H%M); mkdir -p $D; cur=0
 for i in $(seq 1 $N); do
-  monid run -p tikhub -e /api/v1/douyin/app/v3/fetch_hashtag_video_list --query "{\"ch_id\":\"7690834868800620595\",\"sort_type\":2,\"cursor\":$cur,\"count\":10}" -w 60 -j -o $D/p$i.json >/dev/null 2>&1
+  monid run -p tikhub -e /api/v1/douyin/app/v3/fetch_hashtag_video_list --query "{\"ch_id\":\"$CH_ID\",\"sort_type\":2,\"cursor\":$cur,\"count\":10}" -w 60 -j -o $D/p$i.json >/dev/null 2>&1
   cur=$(python -X utf8 -c "import json,sys;d=json.load(open(sys.argv[1],encoding='utf-8'));
 def f(o):
   if isinstance(o,dict):

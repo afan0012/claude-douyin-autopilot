@@ -1,4 +1,4 @@
-# Vibe知识大赏经典曲《千年之后》+ 音效 → mix.wav：python sfx.py mix.wav [配乐.wav]
+# 配乐 + 音效 → mix.wav：python sfx.py mix.wav [配乐.wav]
 # 原曲 17.08 大重拍对齐片中 6.0（「回来了」砸下），即从原曲 11.08 秒开始用；画面转场都卡在 6.0 + n×0.5317 的拍点上
 import numpy as np, subprocess, wave, sys
 SRC = sys.argv[2] if len(sys.argv) > 2 else '_素材/音乐/bgm.wav'   # 配乐不随仓库提供，用你有权使用的音乐

@@ -2,7 +2,7 @@
 //   不带 --go：填好全部表单后停在发布按钮前（演练），截图 data/pub_form.png
 //   带 --go：点发布。job.scheduleHours > 0 时用「定时发布」，留出否决窗口（手机 App 里可取消）
 // 发布包.json：{ video, title, desc:[行], tags:[], coverH, coverV, music:{query,name}, aiDecl, scheduleHours, pinComment }
-// 步骤都来自 10-17～10-20 手工跑通的脚本（scratchpad dy/r1、r2、r3、r36、r40、r42、s3、pub）
+// 步骤来自早期手工跑通的脚本，抖音改版后可能需要调整
 const { run, newPage, w, typeH, loggedOut, log, shot } = require('./lib');
 const fs = require('fs');
 
@@ -119,6 +119,7 @@ async function state(p) {
 
 run(async ({ ctx, args }) => {
   const job = JSON.parse(fs.readFileSync(args[0], 'utf8')); const go = args.includes('--go');
+  if (go && process.env.DY_ALLOW_SEND !== '1') return { ok: false, err: 'BLOCKED: 只有 runner.js（或手动设 DY_ALLOW_SEND=1 的人）能真正发送' };
   const p = await newPage(ctx);
   log('publish_start', { job: args[0], go });
   await upload(p, job.video);

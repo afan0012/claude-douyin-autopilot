@@ -4,7 +4,7 @@
 #   - 不改上游代码（_参考工程/oss/social-auto-upload，git pull 跟进抖音改版），只在这里打补丁
 #   - 关掉它的三层反检测：patchright → 普通 playwright、不注入 stealth.min.js、不加 --disable-blink-features=AutomationControlled
 #   - 登录：不另开浏览器、不搬 cookie，直接在已登录的 Edge（CDP 9333，同 lib.js）的创作者中心标签页里操作
-#   - 默认立即发布（10-31 用户：追热度不等 2 小时，定时也没拦住坏封面）；发布包写 "scheduleHours": N 才定时
+#   - 默认立即发布（追热度不等 2 小时，发布前自动检查兜底）；发布包写 "scheduleHours": N 才定时
 import asyncio, json, os, re, subprocess, sys, time, types, urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -135,12 +135,12 @@ async def music(page, m):
         await page.screenshot(path=str(DATA / 'music_fail.png')); raise RuntimeError('MUSIC_PANEL_NOT_OPEN ' + json.dumps(diag, ensure_ascii=False)[:800])
     inp = search.first
     sheet = page.locator('.semi-sidesheet:visible').last
-    # 曲库搜索结果会变（10-22 前一天还在的「千年之后 (We Never)（剪辑版）」搜不到了），名字也常有出入。
+    # 曲库搜索结果会变（前一天还在的曲子第二天可能搜不到），名字也常有出入。
     # 所以：先按名字精确找；找不到，就把名字里带关键词的候选逐个试听，截下试听音频，和成片里的音乐比旋律，选旋律对得上的。
-    # 都对不上就失败：成片带原曲，不挂曲库音乐会被标成「@Hey创作的原声」
+    # 都对不上就失败：成片带原曲，不挂曲库音乐会被标成「@你的账号名创作的原声」
     norm = lambda s: ''.join(ch for ch in s if ch not in ' ()（）').lower()
-    keys = [k.lower() for k in m.get('match', ['we never', '千年之后'])]
-    queries = m.get('queries') or [m['query'], m['name'], 'We Never 剪辑版', '千年之后 剪辑版', 'We Never']
+    keys = [k.lower() for k in m.get('match') or [m['name']]]
+    queries = m.get('queries') or [m['query'], m['name']]
 
     async def search_for(q):
         # 面板偶尔在动画中或被试听弹层挡住（10-22 真发时 fill 超时）：等输入框可用，不行就重开面板，最多 3 次
@@ -350,6 +350,8 @@ async def main(job_path, go):
 
 if __name__ == '__main__':
     a = sys.argv[1:]
+    if '--go' in a and os.environ.get('DY_ALLOW_SEND') != '1':
+        print(json.dumps({'ok': False, 'err': 'BLOCKED: 只有 runner.js（或手动设 DY_ALLOW_SEND=1 的人）能真正发送'}, ensure_ascii=False)); sys.exit(1)
     try: r = asyncio.run(main(a[0], '--go' in a))
     except Exception as e:
         log('publish_failed', job=a[0] if a else None, engine='sau', msg=f'{type(e).__name__}: {e}'[:400])

@@ -3,7 +3,8 @@
 //   --engine=own：自研的 publish_own.js（上游坏了时的备用）
 //   不带 --go 是演练：填好表单、设好定时，停在发布按钮前；截图 data/pub_form.png
 //   10-30 起：日常直接 --go（一次上传，点发布前自动检查封面/标题/配乐/AI声明/定时，任一不对就停、不发）；
-//   失败不自动重试，尤其「服务器开小差」这类风控信号，先报给用户。只在改了发布代码后演练一次
+//   失败不自动重试，尤其「服务器开小差」这类风控信号，先报给人。只在改了发布代码后演练一次
+//   --go 需要环境变量 DY_ALLOW_SEND=1（runner.js 会带上），否则 sau_publish.py / publish_own.js 直接拒绝
 const { spawnSync } = require('child_process');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '../..');

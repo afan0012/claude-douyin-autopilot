@@ -67,7 +67,7 @@ document.fonts.ready.then(() => {
     for (const [s1, col, gl] of parts) { T(s1, xx, y, size, col, 900, 'left', gl); g.font = `900 ${size}px ${SANS}`; xx += g.measureText(s1).width; }
   };
   if (V) {
-    T('Vibe知识大赏 · 猫的冷知识', cx, 90, 40, 'rgba(255,255,255,0.75)', 700);
+    T('系列名 · 猫的冷知识', cx, 90, 40, 'rgba(255,255,255,0.75)', 700);
     T('你家猫是安全型', cx, 230, 108, GOLD, 900, 'center', 30);
     subtitle(cx, 375, 104, 'center');
     scene(cx - 30, 1080, 1.5);
@@ -76,7 +76,7 @@ document.fonts.ready.then(() => {
     T('测了 108 只猫，答案是……', cx, 1300, 62, GOLD, 900, 'center', 16);
     T('Vitale, Behnke & Udell 2019 · Current Biology', cx, 1385, 28, 'rgba(255,255,255,0.5)', 600);
   } else {
-    T('Vibe知识大赏 · 猫的冷知识', 80, 90, 40, 'rgba(255,255,255,0.75)', 700, 'left');
+    T('系列名 · 猫的冷知识', 80, 90, 40, 'rgba(255,255,255,0.75)', 700, 'left');
     T('你家猫', 80, 220, 120, GOLD, 900, 'left', 30);
     T('是安全型', 80, 350, 120, GOLD, 900, 'left', 30);
     subtitle(80, 480, 100, 'left');

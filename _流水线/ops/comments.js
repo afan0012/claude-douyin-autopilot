@@ -1,7 +1,8 @@
 // 评论：读取全部作品的评论 / 以作者身份回复 / 发作者评论
 //   node comments.js fetch                       → data/comments.json，打印未回复的
 //   node comments.js reply <aweme_id> <cid> <文本>
-//   node comments.js post  <aweme_id> <文本>       （作者在自己作品下发一条评论，用于置顶）
+//   node comments.js post  <aweme_id> <文本>       （作者在自己作品下发一条评论；队列默认不用）
+// reply/post 只有带 DY_ALLOW_SEND=1 才执行（runner.js 会带上）
 // 限速写在代码里：回复每小时 ≤ RATE.hour 条、每天 ≤ RATE.day 条，两条之间 ≥ RATE.gapSec 秒
 const { run, newPage, w, typeH, loggedOut, log, shot, DATA } = require('./lib');
 const fs = require('fs'), path = require('path');
@@ -126,6 +127,7 @@ async function post(ctx, aweme, text) {
 run(async ({ ctx, args }) => {
   const [cmd, ...a] = args;
   if (cmd === 'fetch') return fetchAll(ctx);
+  if ((cmd === 'reply' || cmd === 'post') && process.env.DY_ALLOW_SEND !== '1') return { ok: false, err: 'BLOCKED: 只有 runner.js（或手动设 DY_ALLOW_SEND=1 的人）能真正发送' };
   if (cmd === 'reply') return reply(ctx, a[0], a[1], a.slice(2).join(' '));
   if (cmd === 'post') return post(ctx, a[0], a.slice(1).join(' '));
   return 'usage: fetch | reply <aweme> <cid> <text> | post <aweme> <text>';
