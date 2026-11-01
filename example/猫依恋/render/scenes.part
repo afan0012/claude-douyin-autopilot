@@ -1,0 +1,230 @@
+// ———— 《你家猫，是焦虑型还是安全型？》32 秒（跟 #vibe知识大赏 10-31 热点「焦虑型和安全型」）————
+// 出处：Vitale, Behnke & Udell, 2019, Current Biology 29(18):R864（doi:10.1016/j.cub.2019.08.036）
+//   陌生房间测试：和主人同处 2 分钟 → 主人离开 2 分钟 → 回来 2 分钟；看重逢时的反应
+//   小猫 70 只 64.3% 安全型；成年猫 38 只 65.8% 安全型；人类婴儿约 65%（俄勒冈州立大学新闻稿）
+//   安全型：注意力在主人和环境之间分配、继续探索；不安全型：甩尾、舔嘴唇，躲开（回避）或跳上腿不动（矛盾/焦虑）
+const D = 32, Q = 0.5317, HIT1 = 6.0;
+const T = [0, 3.34, HIT1, 11.32, 15.04, 17.17, 21.42, 25.14, 28.86, 32];
+const SKIN = '#F4C9A6', SHIRT = '#5DA9E9', JEANS = '#6F86B8', HAIR = '#3A2E2A', WOOD = '#B9845A';
+
+// 人：sit=1 坐椅子（面朝左），否则站着；原点 = 落地点。坐姿腿面高 224
+function person(x, y, s, o = {}) {
+  const { sit = 1, reach = 0, a = 1, walk = 0 } = o;
+  g.save(); g.globalAlpha *= a; g.translate(x, y); g.scale(s, s); g.lineCap = 'round';
+  if (sit) {
+    g.fillStyle = WOOD; rr(92, -390, 22, 224, 8); g.fill(); rr(-60, -196, 176, 24, 8); g.fill(); rr(-50, -176, 14, 176, 6); g.fill(); rr(96, -176, 14, 176, 6); g.fill();
+    g.fillStyle = JEANS; rr(-104, -210, 44, 204, 18); g.fill();
+    g.fillStyle = INK; g.beginPath(); g.ellipse(-104, -10, 36, 14, 0, 0, 7); g.fill();
+    g.fillStyle = JEANS; rr(-104, -230, 200, 54, 27); g.fill();
+    g.fillStyle = SHIRT; rr(30, -430, 86, 226, 40); g.fill();
+    g.fillStyle = SKIN; g.beginPath(); g.arc(64, -478, 48, 0, 7); g.fill();
+    g.fillStyle = HAIR; g.beginPath(); g.ellipse(72, -506, 52, 30, 0.1, Math.PI, 0); g.fill(); g.beginPath(); g.arc(104, -486, 22, 0, 7); g.fill();
+    g.fillStyle = INK; g.beginPath(); g.arc(32, -476, 5, 0, 7); g.fill();
+    g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.arc(30, -452, 10, 0.3, 1.6); g.stroke();
+    const hx = lerp(-40, -190, reach), hy = lerp(-246, -290, reach);
+    g.strokeStyle = SHIRT; g.lineWidth = 30; g.beginPath(); g.moveTo(66, -396); g.lineTo(lerp(66, hx, 0.5), lerp(-396, hy, 0.5) + 30 * (1 - reach)); g.stroke();
+    g.strokeStyle = SKIN; g.lineWidth = 24; g.beginPath(); g.moveTo(lerp(66, hx, 0.5), lerp(-396, hy, 0.5) + 30 * (1 - reach)); g.lineTo(hx, hy); g.stroke();
+    g.fillStyle = SKIN; g.beginPath(); g.arc(hx - 6, hy, 17, 0, 7); g.fill();
+  } else {
+    const sw = Math.sin(walk) * 22;
+    g.strokeStyle = JEANS; g.lineWidth = 34; g.beginPath(); g.moveTo(0, -250); g.lineTo(sw, -14); g.moveTo(0, -250); g.lineTo(-sw, -14); g.stroke();
+    g.fillStyle = INK; g.beginPath(); g.ellipse(sw + 10, -8, 28, 12, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(-sw + 10, -8, 28, 12, 0, 0, 7); g.fill();
+    g.fillStyle = SHIRT; rr(-44, -480, 88, 250, 40); g.fill();
+    g.strokeStyle = SKIN; g.lineWidth = 22; g.beginPath(); g.moveTo(0, -440); g.lineTo(-sw * 0.8, -270); g.stroke();
+    g.fillStyle = SKIN; g.beginPath(); g.arc(0, -530, 48, 0, 7); g.fill();
+    g.fillStyle = HAIR; g.beginPath(); g.ellipse(6, -558, 52, 30, 0.1, Math.PI, 0); g.fill();
+  }
+  g.restore();
+}
+function door(x, open = 0) {
+  g.fillStyle = '#5B4636'; rr(x, 220, 150, 302, 6); g.fill();
+  g.fillStyle = '#C98D5A'; g.save(); g.translate(x, 220); g.scale(1 - 0.75 * open, 1); rr(0, 0, 150, 302, 6); g.fill();
+  g.fillStyle = GOLD; g.beginPath(); g.arc(124, 160, 9, 0, 7); g.fill(); g.restore();
+}
+function tag(x, y, word, col, a, s = 1) {
+  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.scale(s, s);
+  g.font = `900 40px ${SANS}`; const w = g.measureText(word).width;
+  rr(-w / 2 - 22, -32, w + 44, 64, 32); g.fillStyle = col; g.fill();
+  g.beginPath(); g.moveTo(-12, 30); g.lineTo(12, 30); g.lineTo(0, 46); g.fill();
+  g.restore(); txt([[word, '#fff']], x, y + 2 * s, 40 * s, a, 900);
+}
+function stress(x, y, t, a) {   // 紧张的小线
+  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.strokeStyle = RED; g.lineWidth = 5; g.lineCap = 'round';
+  const j = Math.sin(t * 30) * 3;
+  for (const [dx, dy, l] of [[-30, 0, 26], [0, -14, 30], [30, 0, 26]]) { g.beginPath(); g.moveTo(x + dx * 1.2 + j, y + dy); g.lineTo(x + dx * 1.6 + j, y + dy - l); g.stroke(); }
+  g.restore();
+}
+function heart(x, y, s, a) {
+  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.scale(s, s); g.fillStyle = RED;
+  g.beginPath(); g.moveTo(0, 14); g.bezierCurveTo(-30, -6, -16, -30, 0, -14); g.bezierCurveTo(16, -30, 30, -6, 0, 14); g.fill(); g.restore();
+}
+function yarn(x, y, r, rot = 0) {
+  g.save(); g.translate(x, y); g.rotate(rot); g.fillStyle = '#E86F8E'; g.beginPath(); g.arc(0, -r, r, 0, 7); g.fill();
+  g.strokeStyle = '#C24F6E'; g.lineWidth = 4; for (const k of [-0.5, 0, 0.5]) { g.beginPath(); g.ellipse(0, -r, r * 0.9, r * 0.35, k * 2, 0, 7); g.stroke(); }
+  g.restore();
+}
+function clock(x, y, r, p, a) {
+  if (a <= 0) return; g.save(); g.globalAlpha *= a;
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.lineWidth = 6; g.strokeStyle = INK; g.stroke();
+  g.fillStyle = 'rgba(229,72,77,0.85)'; g.beginPath(); g.moveTo(x, y); g.arc(x, y, r - 8, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.fill();
+  g.restore(); txt([['离开 ', INK], ['2 分钟', RED]], x, y + r + 34, 34, a, 900);
+}
+function source(s, a) { txt([[s, 'rgba(42,38,51,0.55)']], 24, 84, 17, a, 500, 'left'); }
+const SRC = 'Vitale, Behnke & Udell, 2019, Current Biology';
+
+// S1 0～3.34：两只猫，两种类型
+function s1(t) {
+  floorScene();
+  cat(360, 610, 1.05, { tail: Math.sin(t * 1.5) * 0.6 });
+  cat(880, 610, 1.05, { tail: Math.sin(t * 14), eye: 0.6, crouch: 0.2, tongue: Math.max(0, Math.sin(t * 4.2)) ** 3 });
+  stress(1040, 420, t, easeOut(seg(t, 0.9, 1.1)));
+  tag(390, 300, '安全型', GOLD, easeOut(seg(t, 0.35, 0.55)), pop(t, 0.35, 0.3));
+  tag(910, 300, '焦虑型', RED, easeOut(seg(t, 0.9, 1.1)), pop(t, 0.9, 0.3));
+  txt([['?', BLUE]], 640, 400 + Math.sin(t * 5) * 6, 90, easeOut(seg(t, 1.8, 2.1)), 900);
+}
+// S2 3.34～6.0：主人走出门，计时 2 分钟
+function s2(t) {
+  const a = easeOut(seg(t, T[1], T[1] + 0.2)), wk = ease(seg(t, T[1] + 0.2, T[1] + 1.5));
+  g.save(); g.globalAlpha *= a; floorScene(false); door(1060, seg(t, T[1] + 1.0, T[1] + 1.3) * (1 - seg(t, T[1] + 1.7, T[1] + 1.9)));
+  cat(330, 610, 1.1, { eye: 0.3 + 0.5 * seg(t, T[1] + 1.5, T[1] + 1.8), tail: Math.sin(t * 3) });
+  person(lerp(560, 1135, wk), 612, 0.95, { sit: 0, walk: t * 9 * (wk < 1 ? 1 : 0), a: 1 - seg(t, T[1] + 1.3, T[1] + 1.6) });
+  clock(820, 200, 70, seg(t, T[1] + 1.4, HIT1 - 0.3), easeOut(seg(t, T[1] + 1.3, T[1] + 1.5)));
+  g.restore();
+  source(SRC + '（陌生房间测试）', a);
+}
+// S3 6.0～11.32：重拍——主人回来，猫扑上腿不下来 → 焦虑型
+function s3(t) {
+  floorScene(false); door(1060, 0);
+  const PX = 860, PY = 612, PS = 1.0, j = ease(seg(t, HIT1 + 0.15, HIT1 + 0.75));
+  person(PX, PY, PS, { sit: 1 });
+  const lx = PX - 30 * PS, ly = PY - 230 * PS;
+  const cx = lerp(520, lx - 40, j), cy = lerp(610, ly, j) - Math.sin(j * Math.PI) * 120, cs = lerp(1.0, 0.72, j);
+  const on = t > HIT1 + 0.75, tw = on ? Math.sin(t * 16) : Math.sin(t * 3);
+  const lick = on ? Math.max(0, Math.sin((t - HIT1) * 4.2)) ** 3 : 0;
+  cat(cx, cy, cs, { tail: tw, tongue: lick, eye: on ? 0.5 : 0.3, crouch: on ? 0.25 : 0 });
+  stress(cx + 50, cy - 230 * cs, t, on ? easeOut(seg(t, HIT1 + 1.0, HIT1 + 1.2)) : 0);
+  if (t >= HIT1) { const k = easeOut(seg(t, HIT1, HIT1 + 0.12)), fade = 1 - seg(t, HIT1 + 1.3, HIT1 + 1.6); stamp(420, 220, lerp(1.8, 1, k), k * fade, '回来了', RED); }
+  const k2 = easeOut(seg(t, HIT1 + 2.66, HIT1 + 2.9));
+  tag(cx + 40, cy - 330 * cs, '焦虑型', RED, k2, pop(t, HIT1 + 2.66, 0.4));
+  const k3 = easeOut(seg(t, HIT1 + 3.4, HIT1 + 3.7));
+  if (k3 > 0) { g.save(); g.globalAlpha *= k3; rr(90, 150, 420, 130, 18); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 5; g.strokeStyle = INK; g.stroke(); g.restore();
+    txt([['甩尾巴、舔嘴唇', INK]], 300, 192, 38, k3, 900); txt([['其实在', INK], ['紧张', RED]], 300, 242, 38, k3, 900); }
+  source(SRC + '：不安全型会甩尾、舔嘴唇，或跳上腿不动', 1);
+}
+// S4 11.32～15.04：安全型——蹭一下，接着去玩
+function s4(t) {
+  const a = easeOut(seg(t, T[3], T[3] + 0.25)), t0 = T[3];
+  g.save(); g.globalAlpha *= a; floorScene(false); door(1060, 0);
+  person(860, 612, 1.0, { sit: 1 });
+  const w1 = ease(seg(t, t0 + 0.1, t0 + 0.8)), bump = Math.sin(seg(t, t0 + 0.8, t0 + 1.3) * Math.PI), back = ease(seg(t, t0 + 1.6, t0 + 2.5));
+  const going = t > t0 + 1.5, cx = going ? lerp(620, 380, back) : lerp(380, 620, w1);
+  yarn(250 + (t > t0 + 2.5 ? Math.sin((t - t0) * 9) * 10 : 0), 612, 34, t * 2);
+  cat(cx, 610, 0.95, { flip: going ? 1 : 0, hx: bump * 18, hy: bump * 10, tail: Math.sin(t * 2), eye: 0.2 });
+  heart(cx + 110, 360 - seg(t, t0 + 0.9, t0 + 1.8) * 40, 1.6, easeOut(seg(t, t0 + 0.9, t0 + 1.1)) * (1 - seg(t, t0 + 1.8, t0 + 2.1)));
+  tag(cx + (going ? -40 : 60), 290, '安全型', GOLD, easeOut(seg(t, t0 + 0.4, t0 + 0.6)));
+  g.restore();
+  source(SRC + '：安全型在主人和环境之间分配注意力，继续探索', a);
+}
+// S5 15.04～17.17：回避型——躲开
+function s5(t) {
+  const a = easeOut(seg(t, T[4], T[4] + 0.2)), t0 = T[4];
+  floorScene(false);
+  person(860, 612, 1.0, { sit: 1, reach: ease(seg(t, t0 + 0.2, t0 + 0.8)) });
+  const hide = ease(seg(t, t0 + 0.1, t0 + 0.5));
+  cat(lerp(560, 330, hide), 610, 0.95, { flip: 1, tail: Math.sin(t * 6) * 0.8 });
+  g.fillStyle = '#C9A06A'; rr(170, 400, 250, 212, 6); g.fill(); g.fillStyle = '#B28A55'; g.fillRect(170, 400, 250, 26);
+  g.strokeStyle = '#9C7646'; g.lineWidth = 4; g.beginPath(); g.moveTo(295, 426); g.lineTo(295, 470); g.stroke();
+  tag(300, 340, '回避型', MUTED, easeOut(seg(t, t0 + 0.4, t0 + 0.6)), pop(t, t0 + 0.4, 0.3));
+}
+// S6 17.17～25.14：数字——约 65%，和人类婴儿几乎一样
+function s6(t) {
+  const a = easeOut(seg(t, T[5], T[5] + 0.25));
+  g.save(); g.globalAlpha *= a; g.fillStyle = BG; g.fillRect(0, 0, W, H);
+  txt([['安全型', GOLD], ['占多少？', INK]], 640, 130, 56, 1, 900);
+  const rows = [['小猫（70 只）', 64.3, T[5] + 0.3, OR], ['成年猫（38 只）', 65.8, T[5] + 1.36, OR], ['人类婴儿', 65, T[6] + 0.2, BLUE]];
+  rows.forEach(([lab, v, t0, col], i) => {
+    const y = 250 + i * 110, k = easeOut(seg(t, t0, t0 + 0.6)), x0 = 430, L = 700;
+    txt([[lab, INK]], x0 - 24, y, 34, easeOut(seg(t, t0 - 0.1, t0 + 0.1)), 800, 'right');
+    g.fillStyle = 'rgba(42,38,51,0.1)'; rr(x0, y - 26, L, 52, 26); g.fill();
+    if (k > 0) { g.fillStyle = col; rr(x0, y - 26, L * v / 100 * k, 52, 26); g.fill(); }
+    txt([[Math.round(v * k) + '%', '#fff']], x0 + L * v / 100 * k - 60, y + 2, 34, k, 900);
+  });
+  g.strokeStyle = RED; g.lineWidth = 4; g.setLineDash([10, 8]); const lx = 430 + 700 * 0.65, k4 = easeOut(seg(t, T[6] + 1.0, T[6] + 1.3));
+  if (k4 > 0) { g.globalAlpha *= k4; g.beginPath(); g.moveTo(lx, 200); g.lineTo(lx, 200 + 300 * k4); g.stroke(); }
+  g.restore();
+  if (t > T[6] + 1.6) stamp(1060, 560, lerp(1.6, 0.75, easeOut(seg(t, T[6] + 1.6, T[6] + 1.72))), easeOut(seg(t, T[6] + 1.6, T[6] + 1.72)), '几乎一样', RED);
+  source(SRC + '；人类婴儿约 65%（俄勒冈州立大学）', a);
+}
+// S7 25.14～28.86：你在，它才敢去玩
+function s7(t) {
+  const a = easeOut(seg(t, T[7], T[7] + 0.25));
+  g.save(); g.globalAlpha *= a; floorScene(false);
+  person(900, 612, 1.0, { sit: 1 });
+  yarn(300 + Math.sin(t * 7) * 14, 612, 32, t * 3);
+  const look = Math.max(0, Math.sin((t - T[7]) * 2.4));
+  cat(440, 610, 0.95, { flip: look > 0.6 ? 0 : 1, tail: Math.sin(t * 2), eye: 0.2 });
+  g.strokeStyle = 'rgba(232,154,18,0.8)'; g.lineWidth = 5; g.setLineDash([12, 10]); g.lineDashOffset = -t * 40;
+  g.beginPath(); g.moveTo(520, 420); g.quadraticCurveTo(660, 300, 830, 400); g.stroke();
+  g.restore();
+  const k = easeOut(seg(t, T[7] + 0.8, T[7] + 1.1));
+  txt([['你在', RED], ['，它才敢走开', INK]], 640, 200, 60, k, 900);
+}
+// S8 28.86～32：片尾问题
+function s8(t) {
+  const q = easeOut(seg(t, T[8], T[8] + 0.3));
+  floorScene(false);
+  const s = 1 + 0.3 * (1 - q); g.save(); g.translate(640, 230); g.scale(s, s);
+  txt([['你一回家', INK]], 0, -60, 70, q, 900); txt([['你家猫是哪种？', RED]], 0, 50, 88, q, 900); g.restore();
+  [['安全型', GOLD], ['焦虑型', RED], ['回避型', MUTED]].forEach(([w, col], i) => tag(380 + i * 260, 460, w, col, easeOut(seg(t, T[8] + 0.4 + i * 0.27, T[8] + 0.6 + i * 0.27))));
+}
+
+const CAP = [
+  [-1, 1.7, [['你家猫，也分', INK], ['焦虑型', RED], ['和', INK], ['安全型', GOLD]]],
+  [1.7, T[1], [['科学家真给猫做过测试', INK]]],
+  [T[1], HIT1, [['主人离开 ', INK], ['2 分钟', RED], ['，再回来——', INK]]],
+  [HIT1, HIT1 + 2.66, [['一回来就扑到你身上', INK]]],
+  [HIT1 + 2.66, T[3], [['黏着不下来的，是', INK], ['焦虑型', RED]]],
+  [T[3], T[4], [['安全型：蹭你一下，接着', INK], ['去玩', GOLD]]],
+  [T[4], T[5], [['回避型：', INK], ['躲开', MUTED], ['，不理你', INK]]],
+  [T[5], T[6], [['测了 108 只猫，约 ', INK], ['65%', GOLD], [' 是安全型', INK]]],
+  [T[6], T[7], [['和人类婴儿的比例，', INK], ['几乎一样', RED]]],
+  [T[7], T[8], [['敢走开去玩，是因为知道', INK], ['你在', RED]]],
+];
+window.SFX = { hit: HIT1, cuts: T.slice(1, 9) };
+function layer(fn, t, fadeAt) { g.save(); g.globalAlpha = fadeAt == null ? 1 : 1 - seg(t, fadeAt, fadeAt + 0.25); fn(t); g.restore(); }
+let t = 0;
+function render(tt) {
+  t = tt;
+  g.setTransform(K, 0, 0, K, 0, 0); g.globalAlpha = 1; g.filter = 'none'; g.setLineDash([]);
+  g.fillStyle = BG; g.fillRect(0, 0, W, H);
+  if (t < T[1] + 0.25) layer(s1, t, T[1]);
+  if (t >= T[1] && t < HIT1) layer(s2, t);
+  if (t >= HIT1 && t < T[3] + 0.25) layer(s3, t, T[3]);
+  if (t >= T[3] && t < T[4] + 0.2) layer(s4, t, T[4]);
+  if (t >= T[4] && t < T[5] + 0.2) layer(s5, t, T[5]);
+  if (t >= T[5] && t < T[7] + 0.25) layer(s6, t, T[7]);
+  if (t >= T[7] && t < T[8] + 0.25) layer(s7, t, T[8]);
+  if (t >= T[8]) layer(s8, t);
+  g.setLineDash([]);
+  { const dk = t < HIT1 ? 0.9 * ease(seg(t, HIT1 - 0.6, HIT1 - 0.08)) : 0; if (dk > 0) { g.fillStyle = `rgba(0,0,0,${dk})`; g.fillRect(0, 0, W, H); } }
+  for (const [a, b, parts] of CAP) {
+    if (t < a - 0.01 || t >= b) continue;
+    const al = (a < 0 ? 1 : seg(t, a, a + 0.1)) * (1 - seg(t, b - 0.08, b));
+    const dark = t > HIT1 - 0.6 && t < HIT1;
+    g.save(); g.globalAlpha = al * 0.9; g.font = `800 38px ${SANS}`; const w = parts.reduce((s, [s1]) => s + g.measureText(s1).width, 0);
+    rr(640 - w / 2 - 22, 642, w + 44, 58, 14); g.fillStyle = dark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.92)'; g.fill(); g.restore();
+    txt(dark ? parts.map(([s1, col]) => [s1, col === INK ? '#fff' : col]) : parts, 640, 672, 38, al, 800);
+  }
+  const ta = 1 - seg(t, T[8], T[8] + 0.3);
+  if (ta > 0) { g.save(); g.globalAlpha = ta; g.fillStyle = INK; g.fillRect(0, 0, W, 62); g.fillStyle = OR; g.fillRect(0, 0, 8, 62); g.restore();
+    txt([['你家猫，是', '#fff'], ['焦虑型', '#FF7A7E'], ['还是', '#fff'], ['安全型', GOLD], ['？', '#fff']], 640, 32, 32, ta, 900); }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  POST.apply(t, { bloom: 0.0, thr: 0.95, tilt: 0, grain: 0.02, vig: 0.12, ca: 0.0, warm: 0.0 });
+}
+</script>
+<script src="../../_艺术测试/post.js"></script>
+<script>
+window.grab = (t) => { render(t); return POST.out.toDataURL('image/jpeg', 0.92); };
+document.fonts.ready.then(() => { render(0); window.ready = true; });
+</script>
+</body></html>

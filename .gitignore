@@ -1,0 +1,17 @@
+node_modules/
+__pycache__/
+.venv/
+.douyin_browser_profile/
+_参考工程/
+_素材/
+_流水线/ops/data/
+_流水线/ops/queue/
+_流水线/ops/日报/
+_流水线/scan/
+*.log
+*.wav
+*.mp4
+*/render/fr/
+*/render/st/
+token*.json
+*cookie*.json

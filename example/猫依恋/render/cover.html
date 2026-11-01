@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="c"></canvas>
+<script>
+// 封面：?v=1 竖 1080x1440，否则横 1440x1080。系列小字 / 金色大标题 / 问句副题（关键词发光）/ 红框钩子条 / 底部结论数字（与片中一致）
+const V = location.search.includes('v=1');
+const W = V ? 1080 : 1440, H = V ? 1440 : 1080;
+const c = document.getElementById('c'); c.width = W; c.height = H; const g = c.getContext('2d');
+const SANS = '"Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
+const INK = '#2A2633', RED = '#E5484D', GOLD = '#FFC23D';
+const OR = '#F29A4A', OR2 = '#D97A2E', CREAM = '#FFE9CF', PINK = '#F08A9A';
+function rr(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function T(s, x, y, size, col, w = 900, align = 'center', glow = 0) {
+  g.save(); g.font = `${w} ${size}px ${SANS}`; g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = col;
+  if (glow) { g.shadowColor = col; g.shadowBlur = glow; g.fillText(s, x, y); } g.fillText(s, x, y); g.restore();
+}
+// 与片中同一只橘猫（cat.html 的 cat()，略去动画参数）
+function cat(x, y, s, hy = 0) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.strokeStyle = OR2; g.lineWidth = 26; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(-80, -18); g.bezierCurveTo(-170, -10, -175, -90, -128, -132); g.stroke();
+  g.fillStyle = OR; g.beginPath(); g.ellipse(-20, -92, 88, 96, 0, 0, 7); g.fill();
+  g.strokeStyle = OR2; g.lineWidth = 10; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(-40 - i * 26, -120 + i * 8, 40, Math.PI * 1.15, Math.PI * 1.45); g.stroke(); }
+  g.fillStyle = CREAM; g.beginPath(); g.ellipse(38, -96, 36, 62, 0.1, 0, 7); g.fill();
+  g.fillStyle = OR; rr(12, -70, 30, 72, 14); g.fill(); rr(46, -70, 30, 72, 14); g.fill();
+  g.fillStyle = CREAM; rr(10, -14, 34, 16, 8); g.fill(); rr(44, -14, 34, 16, 8); g.fill();
+  g.save(); g.translate(56, -200 + hy);
+  g.fillStyle = OR; g.beginPath(); g.moveTo(-58, -30); g.lineTo(-48, -92); g.lineTo(-10, -58); g.fill();
+  g.beginPath(); g.moveTo(58, -30); g.lineTo(48, -92); g.lineTo(10, -58); g.fill();
+  g.fillStyle = PINK; g.beginPath(); g.moveTo(-46, -44); g.lineTo(-44, -76); g.lineTo(-22, -56); g.fill();
+  g.beginPath(); g.moveTo(46, -44); g.lineTo(44, -76); g.lineTo(22, -56); g.fill();
+  g.fillStyle = OR; g.beginPath(); g.ellipse(0, 0, 72, 64, 0, 0, 7); g.fill();
+  g.strokeStyle = OR2; g.lineWidth = 8; for (const dx of [-18, 0, 18]) { g.beginPath(); g.moveTo(dx, -60); g.lineTo(dx * 0.8, -38); g.stroke(); }
+  g.fillStyle = CREAM; g.beginPath(); g.ellipse(14, 26, 40, 28, 0, 0, 7); g.fill();
+  for (const ex of [-14, 36]) { g.fillStyle = INK; g.beginPath(); g.ellipse(ex, -4, 13, 16, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + 4, -9, 5, 0, 7); g.fill(); }
+  g.fillStyle = PINK; g.beginPath(); g.moveTo(14, 18); g.lineTo(26, 18); g.lineTo(20, 26); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.95)'; g.lineWidth = 3.5; for (const k of [-1, 0, 1]) { const aa = 0.45 + k * 0.5, L = 100; g.beginPath(); g.moveTo(50, 24 + k * 8); g.quadraticCurveTo(50 + Math.cos(aa) * L * 0.6, 24 + k * 8 + Math.sin(aa) * L * 0.4, 50 + Math.cos(aa) * L, 24 + k * 8 + Math.sin(aa) * L); g.stroke(); }
+  g.restore(); g.restore();
+}
+function treat(x, y, s, blur = 0) {
+  g.save(); if (blur) g.filter = `blur(${blur}px)`; g.translate(x, y); g.scale(s, s);
+  g.fillStyle = '#C9803F'; g.beginPath(); g.ellipse(0, 0, 46, 20, 0, 0, 7); g.fill();
+  g.beginPath(); g.moveTo(36, 0); g.lineTo(70, -22); g.lineTo(64, 0); g.lineTo(70, 22); g.fill();
+  g.strokeStyle = '#9E5D27'; g.lineWidth = 4; for (const dx of [-14, 2, 18]) { g.beginPath(); g.moveTo(dx - 8, -12); g.lineTo(dx + 6, 0); g.lineTo(dx - 8, 12); g.stroke(); }
+  g.fillStyle = INK; g.beginPath(); g.arc(-28, -4, 5, 0, 7); g.fill(); g.restore();
+}
+
+function mouse(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.strokeStyle = '#7B828C'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(34, -10); g.bezierCurveTo(70, -10, 80, -40, 100, -30); g.stroke();
+  g.fillStyle = '#9AA0A8'; g.beginPath(); g.ellipse(0, -22, 44, 26, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(-38, -30, 22, 18, -0.3, 0, 7); g.fill();
+  g.fillStyle = '#F2B8C0'; g.beginPath(); g.arc(-34, -50, 13, 0, 7); g.fill(); g.fillStyle = '#9AA0A8'; g.beginPath(); g.arc(-34, -50, 8, 0, 7); g.fill();
+  g.fillStyle = '#F2B8C0'; g.beginPath(); g.arc(-60, -28, 5, 0, 7); g.fill(); g.fillStyle = INK; g.beginPath(); g.arc(-44, -34, 4, 0, 7); g.fill(); g.restore();
+}
+document.fonts.ready.then(() => {
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#1C1A2E'); bg.addColorStop(1, '#0E0D18'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const cx = W / 2;
+  const tagP = (x, y, w, col, sz) => { g.font = `900 ${sz}px ${SANS}`; const tw = g.measureText(w).width; g.fillStyle = col; rr(x - tw / 2 - sz * 0.5, y - sz * 0.8, tw + sz, sz * 1.6, sz * 0.8); g.fill(); T(w, x, y + 2, sz, '#fff'); };
+  const scene = (x, y, s) => {
+    const sp = g.createRadialGradient(x, y - 150 * s, 0, x, y - 150 * s, 420 * s); sp.addColorStop(0, 'rgba(255,190,120,0.16)'); sp.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sp; g.fillRect(0, 0, W, H);
+    cat(x - 170 * s, y, s * 0.85, 40); cat(x + 170 * s, y, s * 0.85, 40);
+    tagP(x - 120 * s, y - 295 * s, '安全型', '#E89A12', 40 * s); tagP(x + 220 * s, y - 295 * s, '焦虑型', RED, 40 * s);
+  };
+  const subtitle = (x, y, size, align) => {
+    g.font = `900 ${size}px ${SANS}`; const parts = [['还是', '#fff', 0], ['焦虑型', RED, 40], ['？', '#fff', 0]];
+    let w = parts.reduce((s, [p]) => s + g.measureText(p).width, 0), xx = align === 'center' ? x - w / 2 : x;
+    for (const [s1, col, gl] of parts) { T(s1, xx, y, size, col, 900, 'left', gl); g.font = `900 ${size}px ${SANS}`; xx += g.measureText(s1).width; }
+  };
+  if (V) {
+    T('Vibe知识大赏 · 猫的冷知识', cx, 90, 40, 'rgba(255,255,255,0.75)', 700);
+    T('你家猫是安全型', cx, 230, 108, GOLD, 900, 'center', 30);
+    subtitle(cx, 375, 104, 'center');
+    scene(cx - 30, 1080, 1.5);
+    g.save(); g.lineWidth = 6; g.strokeStyle = RED; g.beginPath(); g.roundRect(110, 1130, W - 220, 92, 14); g.stroke(); g.restore();
+    T('一回家就黏着你不下来的——', cx, 1176, 44, '#fff', 900);
+    T('测了 108 只猫，答案是……', cx, 1300, 62, GOLD, 900, 'center', 16);
+    T('Vitale, Behnke & Udell 2019 · Current Biology', cx, 1385, 28, 'rgba(255,255,255,0.5)', 600);
+  } else {
+    T('Vibe知识大赏 · 猫的冷知识', 80, 90, 40, 'rgba(255,255,255,0.75)', 700, 'left');
+    T('你家猫', 80, 220, 120, GOLD, 900, 'left', 30);
+    T('是安全型', 80, 350, 120, GOLD, 900, 'left', 30);
+    subtitle(80, 480, 100, 'left');
+    scene(1070, 880, 1.0);
+    g.save(); g.lineWidth = 6; g.strokeStyle = RED; g.beginPath(); g.roundRect(80, 580, 680, 92, 14); g.stroke(); g.restore();
+    T('一回家就黏着你不下来的——', 420, 626, 38, '#fff', 900);
+    T('测了 108 只猫，答案是……', cx, 960, 68, GOLD, 900, 'center', 16);
+    T('Vitale, Behnke & Udell 2019 · Current Biology', cx, 1036, 28, 'rgba(255,255,255,0.5)', 600);
+  }
+  window.ready = true;
+});
+</script></body></html>
